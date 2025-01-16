@@ -3,7 +3,14 @@ from django.db import models
 class Shelf(models.Model):
     name = models.CharField(max_length=100, unique=True, verbose_name="Название стеллажа")
     capacity = models.PositiveIntegerField(verbose_name="Вместимость стелажа")
-    location = models.CharField(max_length=100, blank=True, verbose_name="Расположение")
+    current_occupation = models.IntegerField(default=0)
+
+    def is_full(self):
+        return self.current_occupation >= self.capacity
+
+    def add_books(self, count):
+        self.current_occupation += count
+        self.save()
 
     def __str__(self):
         return self.name

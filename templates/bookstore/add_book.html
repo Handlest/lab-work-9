@@ -16,34 +16,36 @@
             {% csrf_token %}
             <div class="mb-3">
                 <label for="title" class="form-label">Название</label>
-                <input type="text" class="form-control" id="title" name="title" required>
+                <input type="text" class="form-control" id="title" name="title" value="{{ title }}" required>
             </div>
             <div class="mb-3">
                 <label for="author" class="form-label">Автор</label>
-                <input type="text" class="form-control" id="author" name="author" required>
+                <input type="text" class="form-control" id="author" name="author" value="{{ author }}" required>
             </div>
             <div class="mb-3">
                 <label for="publisher" class="form-label">Издательство</label>
-                <input type="text" class="form-control" id="publisher" name="publisher">
+                <input type="text" class="form-control" id="publisher" name="publisher" value="{{ publisher }}">
             </div>
             <div class="mb-3">
                 <label for="publication_year" class="form-label">Год выпуска</label>
-                <input type="number" class="form-control" id="publication_year" name="publication_year">
+                <input type="number" class="form-control" id="publication_year" name="publication_year" value="{{ publication_year }}">
             </div>
             <div class="mb-3">
                 <label for="genre" class="form-label">Жанр</label>
-                <input type="text" class="form-control" id="genre" name="genre">
+                <input type="text" class="form-control" id="genre" name="genre" value="{{ genre }}">
             </div>
             <div class="mb-3">
                 <label for="quantity" class="form-label">Количество</label>
-                <input type="number" class="form-control" id="quantity" name="quantity" required>
+                <input type="number" class="form-control" id="quantity" name="quantity" value="{{ quantity }}" required>
             </div>
             <div class="mb-3">
                 <label for="shelf" class="form-label">Стеллаж</label>
                 <select class="form-control" id="shelf" name="shelf">
                     <option value="">Без стеллажа</option>
                     {% for shelf in shelves %}
-                    <option value="{{ shelf.id }}">{{ shelf.name }} (вместимость: {{ shelf.capacity }})</option>
+                    <option value="{{ shelf.id }}" {% if shelf.id == shelf_id %}selected{% endif %}>
+                        {{ shelf.name }} (вместимость: {{ shelf.capacity }})
+                    </option>
                     {% endfor %}
                 </select>
             </div>

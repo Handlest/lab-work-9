@@ -1,4 +1,8 @@
+from django.contrib import messages
 from django.db.models import Q
+from django.shortcuts import get_object_or_404
+
+
 
 def book_list(request):
     search_query: str = request.GET.get('search', '')  # Получаем поисковый запрос
@@ -43,36 +47,42 @@ def add_book(request):
         shelf_id = request.POST.get('shelf')
 
         # Найти указанный стеллаж
-        shelf = Shelf.objects.get(id=shelf_id) if shelf_id else None
+        shelf = get_object_or_404(Shelf, id=shelf_id)
 
-        # Создать книгу
-        book = Book.objects.create(
-            title=title,
-            author=author,
-            publisher=publisher,
-            publication_year=publication_year,
-            genre=genre,
-            quantity=quantity,
-            shelf=shelf
-        )
-        return redirect('book_list')  # Перенаправление на список книг
-
-    # Отобразить доступные стеллажи для выбора
+        try:
+            if not shelf.is_full() and int(shelf.current_occupation) + int(quantity) < int(shelf.capacity):
+                Book.objects.create(
+                    title=title, author=author, publisher=publisher,
+                    genre=genre, publication_year=publication_year, shelf=shelf, quantity=quantity
+                )
+                shelf.add_books(int(quantity))
+                return redirect('book_list')
+            else:
+                raise ValueError("Невозможно добавить книгу: стеллаж заполнен или не хватает места.")
+        except ValueError as e:
+            messages.error(request, str(e))  # Показать ошибку пользователю
+            # Возвращаем данные обратно в форму
+            shelves = Shelf.objects.all()
+            return render(request, 'bookstore/add_book.html', {
+                    'shelves': shelves,
+                    'title': title,
+                    'author': author,
+                    'publisher': publisher,
+                    'publication_year': publication_year,
+                    'genre': genre,
+                    'quantity': quantity,
+                    'shelf_id': shelf_id,
+            })
     shelves = Shelf.objects.all()
     return render(request, 'bookstore/add_book.html', {'shelves': shelves})
 
 
-from django.shortcuts import get_object_or_404, redirect
-from .models import Book
-
 def delete_book(request, book_id):
     book = get_object_or_404(Book, id=book_id)
+    book.shelf.add_books(-int(book.quantity))
     book.delete()
     return redirect('book_list')  # Перенаправление на список книг
 
-
-from django.shortcuts import render, get_object_or_404, redirect
-from .models import Book, Shelf
 
 def edit_book(request, book_id):
     book = get_object_or_404(Book, id=book_id)
@@ -88,6 +98,26 @@ def edit_book(request, book_id):
         shelf_id = request.POST.get('shelf')
         book.shelf = Shelf.objects.get(id=shelf_id) if shelf_id else None
         book.save()
+        book.shelf.add_books(int(book.quantity))
         return redirect('book_list')  # Перенаправление на список книг
 
     return render(request, 'bookstore/edit_book.html', {'book': book, 'shelves': shelves})
+
+
+def manage_shelves(request):
+    shelves = Shelf.objects.all()  # Получаем все стеллажи
+    return render(request, 'bookstore/manage_shelves.html', {'shelves': shelves})
+
+
+def edit_shelf(request, shelf_id):
+    shelf = get_object_or_404(Shelf, id=shelf_id)
+
+    if request.method == 'POST':
+        # Обрабатываем редактирование вместимости
+        new_capacity = request.POST.get('capacity')
+        if new_capacity:
+            shelf.capacity = int(new_capacity)
+            shelf.save()
+            return redirect('manage_shelves')
+
+    return render(request, 'bookstore/edit_shelf.html', {'shelf': shelf})
