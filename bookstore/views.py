@@ -1,7 +1,8 @@
 from django.contrib import messages
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-
+from django.shortcuts import render, redirect
+from .models import Book, Shelf
 
 
 def book_list(request):
@@ -30,11 +31,6 @@ def add_shelf(request):
         return redirect('book_list')  # Перенаправление на список книг
 
     return render(request, 'bookstore/add_shelf.html')
-
-
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
-from .models import Book, Shelf
 
 def add_book(request):
     if request.method == 'POST':
